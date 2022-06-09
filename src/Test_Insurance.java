@@ -1,3 +1,6 @@
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.*;
@@ -5,6 +8,8 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.Locale;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import static java.time.temporal.TemporalAdjusters.*;
 
@@ -13,7 +18,7 @@ import static java.time.temporal.TemporalAdjusters.*;
  */
 
 public class Test_Insurance {
-    public static void main(String[] args){
+    public static void main(String[] args) throws InterruptedException {
         //获取今天所在是周几
         LocalDate today=LocalDate.now();
         System.out.println(today);
@@ -48,9 +53,45 @@ public class Test_Insurance {
 //        求现在距离2023新年的倒计时
         LocalDate date3= today.with(firstDayOfNextYear());
         System.out.println("距离新年"+ ChronoUnit.DAYS.between(today, date3) +"天");
+//  使用 CompletableFuture 读多个文件，并输出文本内容，如果读文件过程中有异常，要处理异常
+        CompletableFuture<String> s1=CompletableFuture.supplyAsync(()->{
+            try {
+                return readTxt("C:\\Lei\\1.txt");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        CompletableFuture<String> s2=CompletableFuture.supplyAsync(()->{
+            try {
+                return readTxt("C:\\Lei\\2.txt");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        CompletableFuture<Void> s_add=CompletableFuture.allOf(s1,s2);
+        s_add.thenAccept((result)->{
+            try {
+                System.out.println(s1.get()+s2.get());
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            } catch (ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        Thread.sleep(200);
 
 
+    }
+    private static String readTxt(String s) throws IOException {
+        String t1= new BufferedReader(new FileReader(s)).readLine();
+//        System.out.println(t1);
+        try{
+            Thread.sleep((long) (Math.random() * 100));
+        }catch (InterruptedException e){
 
+        }
+        return t1;
     }
 
 }
